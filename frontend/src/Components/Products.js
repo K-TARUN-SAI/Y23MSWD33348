@@ -13,9 +13,9 @@ function Product() {
   const [editingId, setEditingId] = useState(null);
   const { user } = useContext(AuthContext);
 
-  const PRODUCT_API = process.env.REACT_APP_API_URL;
-  const CART_API = process.env.REACT_APP_CART_URL;
-  const ORDER_API = process.env.REACT_APP_ORDER_URL;
+  const PRODUCT_API = https://doorstep-backend.onrender.com/api/products;
+  const CART_API = https://doorstep-backend.onrender.com/api/cart;
+  const ORDER_API = https://doorstep-backend.onrender.com/api/order;
 
 useEffect(() => {
   const fetchData = async () => {
