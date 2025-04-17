@@ -19,7 +19,7 @@
       e.preventDefault();
 
       try {
-        const response = await axios.post('http://localhost:5000/submit-feedback', formData);
+        const response = await axios.post('https://doorstep-backend.onrender.com/submit-feedback', formData);
         alert(response.data.message);
       } catch (error) {
         alert('Error submitting feedback.');
