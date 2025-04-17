@@ -1,39 +1,43 @@
-import React from 'react';
-import { Typography, Container, Box } from '@mui/material';
-import LocalShippingIcon from '@mui/icons-material/LocalShipping';
+import React, { useEffect, useState } from 'react';
+import axios from 'axios';
+import { Card, Col, Row, Container } from 'react-bootstrap';
 
-const Order = () => {
+function Order({ userId }) {
+  const [orders, setOrders] = useState([]);
+  const ORDER_API = process.env.REACT_APP_ORDER_URL;
+
+  useEffect(() => {
+    const fetchOrders = async () => {
+      const res = await axios.get(`${ORDER_API}/${userId}`);
+      setOrders(res.data);
+    };
+    fetchOrders();
+  }, [ORDER_API, userId]);
+  
+
   return (
-    <Container maxWidth="lg">
-      <Box 
-        sx={{ 
-          display: 'flex',
-          alignItems: 'center',
-          gap: 2,
-          py: 4,
-          borderBottom: '1px solid #e0e0e0'
-        }}
-      >
-        <LocalShippingIcon 
-          sx={{ 
-            fontSize: 40, 
-            color: '#1976d2' 
-          }} 
-        />
-        <Typography 
-          variant="h3" 
-          component="h1"
-          sx={{
-            fontWeight: 600,
-            color: '#1a237e',
-            letterSpacing: '-0.5px'
-          }}
-        >
-          Your Orders
-        </Typography>
-      </Box>
+    <Container className="py-4">
+      <h2>Your Orders</h2>
+      {orders.map((order, i) => (
+        <div key={i} className="mb-4">
+          <h5>Order #{i + 1} - {new Date(order.createdAt).toLocaleString()}</h5>
+          <Row>
+            {order.items.map(({ productId, quantity }) => (
+              <Col md={4} key={productId._id}>
+                <Card className="mb-3">
+                  <Card.Body>
+                    <Card.Title>{productId.name}</Card.Title>
+                    <Card.Text>Price: ₹{productId.price}</Card.Text>
+                    <Card.Text>Quantity: {quantity}</Card.Text>
+                  </Card.Body>
+                </Card>
+              </Col>
+            ))}
+          </Row>
+        </div>
+      ))}
     </Container>
   );
-};
+}
 
 export default Order;

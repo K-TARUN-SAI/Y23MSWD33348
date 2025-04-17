@@ -6,12 +6,20 @@ const productSchema = new mongoose.Schema({
     required: true,
   },
   price: {
-    type: Number, // Fixed from Double to Number
+    type: Number,
     required: true,
   },
   category: {
     type: String,
     required: true,
+  },
+  description: {
+    type: String,
+    default: "", // Optional
+  },
+  errorCode: {
+    type: String,
+    default: "", // Optional
   },
 });
 

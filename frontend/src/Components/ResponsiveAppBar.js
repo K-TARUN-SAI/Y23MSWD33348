@@ -1,26 +1,16 @@
-import * as React from "react";
-import { Link } from "react-router-dom"; // Import Link
+import React, { useContext } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import AuthContext from "../context/AuthContext";
+import {
+  AppBar, Box, Toolbar, IconButton, Typography, InputBase, Menu, MenuItem, Avatar,
+  Button, Tooltip, Container
+} from "@mui/material";
 import { styled, alpha } from "@mui/material/styles";
-import AppBar from "@mui/material/AppBar";
-import Box from "@mui/material/Box";
-import Toolbar from "@mui/material/Toolbar";
-import IconButton from "@mui/material/IconButton";
-import Typography from "@mui/material/Typography";
-import InputBase from "@mui/material/InputBase";
-import Menu from "@mui/material/Menu";
 import MenuIcon from "@mui/icons-material/Menu";
 import SearchIcon from "@mui/icons-material/Search";
-import Container from "@mui/material/Container";
-import Avatar from "@mui/material/Avatar";
-import Button from "@mui/material/Button";
-import Tooltip from "@mui/material/Tooltip";
-import MenuItem from "@mui/material/MenuItem";
 import AdbIcon from "@mui/icons-material/Adb";
 
-const pages = ["Home", "Products", "Cart", "Order","API_Products"];
-const settings = ["Profile", "Login", "SignUp", "Logout"];
-
-const Search = styled("div")(({ theme, isFocused }) => ({
+const Search = styled("div")(({ theme }) => ({
   position: "relative",
   borderRadius: theme.shape.borderRadius,
   backgroundColor: alpha(theme.palette.common.white, 0.15),
@@ -28,8 +18,7 @@ const Search = styled("div")(({ theme, isFocused }) => ({
     backgroundColor: alpha(theme.palette.common.white, 0.25),
   },
   marginLeft: 0,
-  width: isFocused ? "400px" : "100%", // Change width based on focus
-  transition: "width 0.3s ease", // Smooth transition
+  width: "100%",
   [theme.breakpoints.up("sm")]: {
     marginLeft: theme.spacing(1),
     width: "300px",
@@ -53,49 +42,48 @@ const StyledInputBase = styled(InputBase)(({ theme }) => ({
     padding: theme.spacing(1, 1, 1, 0),
     paddingLeft: `calc(1em + ${theme.spacing(4)})`,
     transition: theme.transitions.create("width"),
-    [theme.breakpoints.up("sm")]: {
-      width: "100%",
-      "&:focus": {
-        width: "100%",
-      },
-    },
   },
 }));
 
 function ResponsiveAppBar() {
+  const { user, logout } = useContext(AuthContext);
+  const navigate = useNavigate();
   const [anchorElNav, setAnchorElNav] = React.useState(null);
   const [anchorElUser, setAnchorElUser] = React.useState(null);
-  const [isFocused, setIsFocused] = React.useState(false); // State for focus
 
-  const handleOpenNavMenu = (event) => {
-    setAnchorElNav(event.currentTarget);
+  const handleOpenNavMenu = (e) => setAnchorElNav(e.currentTarget);
+  const handleOpenUserMenu = (e) => setAnchorElUser(e.currentTarget);
+  const handleCloseNavMenu = () => setAnchorElNav(null);
+  const handleCloseUserMenu = () => setAnchorElUser(null);
+
+  const handleLogout = () => {
+    logout();
+    navigate("/login");
+    handleCloseUserMenu();
   };
 
-  const handleOpenUserMenu = (event) => {
-    setAnchorElUser(event.currentTarget);
+  const renderLinks = () => {
+    if (!user) return ["Home", "API_Products"];
+    if (user.role === "admin") return ["Home", "Products", "API_Products"];
+    if (user.role === "seller") return ["Home", "API_Products", "Cart"];
+    return ["Home", "Products", "Cart", "Order"];
   };
 
-  const handleCloseNavMenu = () => {
-    setAnchorElNav(null);
-  };
-
-  const handleCloseUserMenu = () => {
-    setAnchorElUser(null);
-  };
+  const navLinks = renderLinks();
 
   return (
-    <AppBar position="static">
+    <AppBar position="static" sx={{ backgroundColor: '#000000' }}>
       <Container maxWidth="xl">
         <Toolbar disableGutters>
           <AdbIcon sx={{ display: { xs: "none", md: "flex" }, mr: 1 }} />
           <Typography
             variant="h6"
             noWrap
-            component="a"
-            href="#"
+            component={Link}
+            to="/"
             sx={{
               mr: 2,
-              display: { xs: "flex", md: "flex" },
+              display: "flex",
               fontFamily: "monospace",
               fontWeight: 700,
               letterSpacing: ".3rem",
@@ -107,113 +95,80 @@ function ResponsiveAppBar() {
           </Typography>
 
           <Box sx={{ flexGrow: 1, display: { xs: "flex", md: "none" } }}>
-            <IconButton
-              size="large"
-              aria-label="account of current user"
-              aria-controls="menu-appbar"
-              aria-haspopup="true"
-              onClick={handleOpenNavMenu}
-              color="inherit"
-            >
+            <IconButton onClick={handleOpenNavMenu} color="inherit">
               <MenuIcon />
             </IconButton>
             <Menu
-              id="menu-appbar"
               anchorEl={anchorElNav}
-              anchorOrigin={{
-                vertical: "bottom",
-                horizontal: "left",
-              }}
-              keepMounted
-              transformOrigin={{
-                vertical: "top",
-                horizontal: "left",
-              }}
               open={Boolean(anchorElNav)}
               onClose={handleCloseNavMenu}
-              sx={{ display: { xs: "block", md: "none" } }}
             >
-              {pages.map((page) => (
+              {navLinks.map((page) => (
                 <MenuItem key={page} onClick={handleCloseNavMenu}>
-                  <Typography textAlign="center">
-                    <Link
-                      to={page === "Home" ? "/" : `/${page.toLowerCase()}`}
-                      style={{ textDecoration: "none", color: "inherit" }}
-                    >
-                      {page}
-                    </Link>
-                  </Typography>
+                  <Link to={page === "Home" ? "/" : `/${page.toLowerCase()}`} style={{ textDecoration: "none", color: "inherit" }}>
+                    {page}
+                  </Link>
                 </MenuItem>
               ))}
             </Menu>
           </Box>
 
           <Box sx={{ flexGrow: 1, display: { xs: "none", md: "flex" } }}>
-            {pages.map((page) => (
+            {navLinks.map((page) => (
               <Button
                 key={page}
                 onClick={handleCloseNavMenu}
-                sx={{ my: 2, color: "white", display: "block", mx: 2 }} // Added mx for horizontal margin
+                sx={{ my: 2, color: "white", display: "block", mx: 2 }}
               >
-                <Link
-                  to={page === "Home" ? "/" : `/${page.toLowerCase()}`}
-                  style={{ textDecoration: "none", color: "inherit" }}
-                >
+                <Link to={page === "Home" ? "/" : `/${page.toLowerCase()}`} style={{ textDecoration: "none", color: "inherit" }}>
                   {page}
                 </Link>
               </Button>
             ))}
           </Box>
 
-          <Search isFocused={isFocused}>
+          <Search>
             <SearchIconWrapper>
               <SearchIcon />
             </SearchIconWrapper>
-            <StyledInputBase
-              placeholder="Search…"
-              inputProps={{ "aria-label": "search" }}
-              onFocus={() => setIsFocused(true)} // Set focus state to true
-              onBlur={() => setIsFocused(false)} // Set focus state to false
-            />
+            <StyledInputBase placeholder="Search…" inputProps={{ "aria-label": "search" }} />
           </Search>
 
           <Tooltip title="Open settings">
             <IconButton onClick={handleOpenUserMenu} sx={{ p: 0, ml: 2 }}>
-              <Avatar alt="User Avatar" src="https://via.placeholder.com/150" />
+              <Avatar alt="User" src="https://via.placeholder.com/150" />
             </IconButton>
           </Tooltip>
           <Menu
-            sx={{ mt: "45px" }}
-            id="menu-appbar"
             anchorEl={anchorElUser}
-            anchorOrigin={{
-              vertical: "top",
-              horizontal: "right",
-            }}
-            keepMounted
-            transformOrigin={{
-              vertical: "top",
-              horizontal: "right",
-            }}
             open={Boolean(anchorElUser)}
             onClose={handleCloseUserMenu}
           >
-            {settings.map((setting) => (
-              <MenuItem key={setting} onClick={handleCloseUserMenu}>
-                <Typography textAlign="center">
-                  <Link
-                    to={
-                      setting === "Profile"
-                        ? "/profile"
-                        : `/${setting.toLowerCase()}`
-                    }
-                    style={{ textDecoration: "none", color: "inherit" }}
-                  >
-                    {setting}
+            {!user ? (
+              <>
+                <MenuItem onClick={handleCloseUserMenu}>
+                  <Link to="/login" style={{ textDecoration: "none", color: "inherit" }}>
+                    Login
                   </Link>
-                </Typography>
-              </MenuItem>
-            ))}
+                </MenuItem>
+                <MenuItem onClick={handleCloseUserMenu}>
+                  <Link to="/register" style={{ textDecoration: "none", color: "inherit" }}>
+                    SignUp
+                  </Link>
+                </MenuItem>
+              </>
+            ) : (
+              <>
+                <MenuItem onClick={handleCloseUserMenu}>
+                  <Link to="/profile" style={{ textDecoration: "none", color: "inherit" }}>
+                    Profile
+                  </Link>
+                </MenuItem>
+                <MenuItem onClick={handleLogout}>
+                  Logout
+                </MenuItem>
+              </>
+            )}
           </Menu>
         </Toolbar>
       </Container>

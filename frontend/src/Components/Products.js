@@ -1,6 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useContext } from 'react';
 import axios from 'axios';
 import { Card, Button, Form, Row, Col, Container } from 'react-bootstrap';
+import { QRCodeCanvas } from 'qrcode.react';
+import { PencilSquare, TrashFill } from 'react-bootstrap-icons';
+import AuthContext from '../context/AuthContext';
 
 function Product() {
   const [products, setProducts] = useState([]);
@@ -8,16 +11,28 @@ function Product() {
   const [price, setPrice] = useState('');
   const [category, setCategory] = useState('');
   const [editingId, setEditingId] = useState(null);
+  const { user } = useContext(AuthContext);
 
-  const API_URL = process.env.REACT_APP_API_URL;
+  const PRODUCT_API = process.env.REACT_APP_API_URL;
+  const CART_API = process.env.REACT_APP_CART_URL;
+  const ORDER_API = process.env.REACT_APP_ORDER_URL;
 
-  useEffect(() => {
-    fetchProducts();
-  }, []);
+useEffect(() => {
+  const fetchData = async () => {
+    try {
+      const response = await axios.get(PRODUCT_API);
+      setProducts(response.data);
+    } catch (error) {
+      console.error("Error fetching products:", error);
+    }
+  };
+  fetchData();
+}, [PRODUCT_API]);
+
 
   const fetchProducts = async () => {
     try {
-      const response = await axios.get(API_URL);
+      const response = await axios.get(PRODUCT_API);
       setProducts(response.data);
     } catch (error) {
       console.error("Error fetching products:", error);
@@ -27,14 +42,12 @@ function Product() {
   const saveProduct = async () => {
     try {
       const productData = { name, price, category };
-
       if (editingId) {
-        await axios.put(`${API_URL}/${editingId}`, productData);
+        await axios.put(`${PRODUCT_API}/${editingId}`, productData);
         setEditingId(null);
       } else {
-        await axios.post(API_URL, productData);
+        await axios.post(PRODUCT_API, productData);
       }
-
       setName('');
       setPrice('');
       setCategory('');
@@ -46,7 +59,7 @@ function Product() {
 
   const deleteProduct = async (id) => {
     try {
-      await axios.delete(`${API_URL}/${id}`);
+      await axios.delete(`${PRODUCT_API}/${id}`);
       fetchProducts();
     } catch (error) {
       console.error("Error deleting product:", error);
@@ -59,61 +72,107 @@ function Product() {
     setPrice(product.price);
     setCategory(product.category);
   };
+  const addToCart = async (id) => {
+    await axios.post(`${process.env.REACT_APP_CART_URL}/add`, {
+      userId: user.id,
+      productId: id
+    });
+  };
+  
 
+  const orderNow = async () => {
+    await axios.post(`${process.env.REACT_APP_ORDER_URL}/place`, {}, {
+      headers: { Authorization: `Bearer ${user.token}` }
+    });
+  };
+  
   return (
-    <Container>
-      <h2 className="mb-4 text-center">Manage Products</h2>
+    <Container className="py-5">
+      <h2 className="mb-5 text-center fw-bold">🛒 Product Management</h2>
 
-      {/* Product Form */}
-      <Form className="mb-4">
-        <Row className="g-3">
-          <Col md={4}>
-            <Form.Control 
-              placeholder="Product Name" 
-              value={name} 
-              onChange={(e) => setName(e.target.value)} 
-            />
-          </Col>
-          <Col md={3}>
-            <Form.Control 
-              placeholder="Price" 
-              type="number"
-              value={price} 
-              onChange={(e) => setPrice(e.target.value)} 
-            />
-          </Col>
-          <Col md={3}>
-            <Form.Control 
-              placeholder="Category" 
-              value={category} 
-              onChange={(e) => setCategory(e.target.value)} 
-            />
-          </Col>
-          <Col md={2}>
-            <Button 
-              variant={editingId ? "warning" : "success"} 
-              onClick={saveProduct}
-              className="w-100"
-            >
-              {editingId ? "Update" : "Add"}
-            </Button>
-          </Col>
-        </Row>
-      </Form>
+      {user?.role === 'admin' && (
+        <Card className="p-4 shadow-sm mb-5">
+          <Form>
+            <Row className="gy-3">
+              <Col md={4}>
+                <Form.Control
+                  placeholder="Product Name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                />
+              </Col>
+              <Col md={3}>
+                <Form.Control
+                  placeholder="Price"
+                  type="number"
+                  value={price}
+                  onChange={(e) => setPrice(e.target.value)}
+                />
+              </Col>
+              <Col md={3}>
+                <Form.Control
+                  placeholder="Category"
+                  value={category}
+                  onChange={(e) => setCategory(e.target.value)}
+                />
+              </Col>
+              <Col md={2}>
+                <Button
+                  variant={editingId ? "warning" : "success"}
+                  onClick={saveProduct}
+                  className="w-100 fw-semibold"
+                >
+                  {editingId ? "Update" : "Add"}
+                </Button>
+              </Col>
+            </Row>
+          </Form>
+        </Card>
+      )}
 
-      {/* Product Cards */}
-      <Row>
+      <Row xs={1} md={2} lg={3} className="g-4">
         {products.map(product => (
-          <Col md={4} key={product._id} className="mb-3">
-            <Card>
+          <Col key={product._id}>
+            <Card className="h-100 shadow-sm rounded-4">
               <Card.Body>
-                <Card.Title>{product.name}</Card.Title>
+                <Card.Title className="fw-bold">{product.name}</Card.Title>
                 <Card.Text>
-                  <strong>Price:</strong> ₹{product.price} <br />
-                  <strong>Category:</strong> {product.category}
+                  <span className="d-block mb-1"><strong>💵 Price:</strong> ₹{product.price}</span>
+                  <span className="d-block"><strong>📦 Category:</strong> {product.category}</span>
                 </Card.Text>
-                <Button variant="info" className="me-2" onClick={() => editProduct(product)}>Edit</Button>
-                <Button variant="danger" onClick={() => deleteProduct(product._id)}>Delete</Button>
+
+                <div className="text-center my-3">
+                  <QRCodeCanvas
+                    value={`Product Name: ${product.name}\nPrice: ₹${product.price}\nCategory: ${product.category}`}
+                    size={128}
+                    bgColor={"#ffffff"}
+                    fgColor={"#000000"}
+                    level={"H"}
+                    includeMargin={true}
+                  />
+                </div>
+
+                {user?.role === 'admin' ? (
+                  <div className="d-flex justify-content-between">
+                    <Button variant="outline-primary" onClick={() => editProduct(product)}>
+                      <PencilSquare className="me-1" />
+                      Edit
+                    </Button>
+                    <Button variant="outline-danger" onClick={() => deleteProduct(product._id)}>
+                      <TrashFill className="me-1" />
+                      Delete
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="d-flex justify-content-between">
+                    <Button variant="outline-success" onClick={() => addToCart(product._id)}>
+                      Add to Cart
+                    </Button>
+                    <Button variant="primary" onClick={() => orderNow(product._id)}>
+                      Order Now
+                    </Button>
+                  </div>
+                )}
               </Card.Body>
             </Card>
           </Col>
