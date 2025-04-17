@@ -1,6 +1,6 @@
-
 import React, { useContext } from "react";
 import { BrowserRouter as Router, Route, Routes, Navigate } from "react-router-dom";
+import ReactDOM from 'react-dom';  // Updated for React 17
 import AuthContext from "./context/AuthContext";
 import "./App.css";
 import Home from "./Components/Home";
@@ -46,7 +46,6 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/products" element={<Products />} />
           <Route path="/cart" element={<Cart userId={user?.id} />} />
-
           <Route path="/history" element={<History />} />
           <Route path="/login" element={<JWTLogin />} />
           <Route path="/logout" element={<Logout />} />
