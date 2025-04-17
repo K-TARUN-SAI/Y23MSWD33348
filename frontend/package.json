@@ -7,8 +7,8 @@
   "@emotion/react": "^11.14.0",
   "@emotion/styled": "^11.14.0",
   "@fortawesome/fontawesome-free": "^6.7.2",
-  "@mui/icons-material": "^6.0.0",  // Updated version
-  "@mui/material": "^6.0.0",  // Updated version
+  "@mui/icons-material": "^6.0.0",  
+  "@mui/material": "^6.0.0",  
   "@toolpad/core": "^0.11.0",
   "axios": "^1.7.9",
   "cra-template": "1.2.0",
